@@ -20,6 +20,11 @@ const detectPackageManager = async (): Promise<DetectResult> => {
   return cachedPm;
 };
 
+// Exported for testing purposes only
+export const _resetCache = () => {
+  cachedPm = undefined;
+};
+
 const getRunScriptCommand = (pm: DetectResult | null, scriptName: string): string => {
   if (!pm) {
     return `npm run ${scriptName}`;
