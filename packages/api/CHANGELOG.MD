@@ -1,5 +1,11 @@
 # Changelog
 
+## [12.0.0]
+
+### ⚠️ Breaking Changes
+
+- **Default API version updated**: The default API version is now `2025-10`
+
 ## [11.1.0]
 
 ### Fixed
