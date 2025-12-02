@@ -68,7 +68,13 @@ export class SeamlessApiClient {
         clearTimeout(timeoutId);
         removeListener();
         if (data.errorMessage) {
-          const error = new SeamlessApiClientError(data.errorMessage, data.data?.errors);
+          // Include errors, partial data, and extensions in the error response
+          const error = new SeamlessApiClientError(
+            data.errorMessage,
+            data.data?.errors,
+            data.data?.data,
+            data.data?.extensions,
+          );
           reject(error);
         } else {
           resolve(data as T);
