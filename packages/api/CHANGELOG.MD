@@ -1,5 +1,17 @@
 # Changelog
 
+## [12.0.0]
+
+### ⚠️ Breaking Changes
+
+- **Default API version updated**: The default API version is now `2025-10`
+
+## [11.1.0]
+
+### Fixed
+
+- **SeamlessApiClient partial data on errors**: Fixed an issue where `SeamlessApiClientError` did not include partially resolved `data` when GraphQL returned both errors and partial data. The error's `response` object now includes `errors`, `data`, and `extensions` properties (including `requestId`). ([#80](https://github.com/mondaycom/monday-graphql-api/issues/80))
+
 ## [11.0.0]
 
 ### ⚠️ Breaking Changes
