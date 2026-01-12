@@ -115,26 +115,15 @@ export class ApiClient {
       return client.request<T>(query, variables);
     }
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => {
-      controller.abort();
-    }, timeout);
-
-    try {
-      const result = await client.request<T>({
-        document: query,
-        variables,
-        signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
-      return result;
-    } catch (error) {
-      clearTimeout(timeoutId);
-      if (controller.signal.aborted) {
-        throw new Error(`Request timed out after ${timeout}ms`);
-      }
-      throw error;
-    }
+    return this.requestWithTimeout<T>(
+      (signal) =>
+        client.request<T>({
+          document: query,
+          variables,
+          signal,
+        }),
+      timeout,
+    );
   };
 
   /**
@@ -166,27 +155,39 @@ export class ApiClient {
       return client.rawRequest<T>(query, variables);
     }
 
+    return this.requestWithTimeout<GraphQLClientResponse<T>>(
+      (signal) =>
+        client.rawRequest<T>({
+          query,
+          variables,
+          signal,
+        }),
+      timeout,
+    );
+  };
+
+  /**
+   * Executes a request with timeout handling.
+   *
+   * @param {Function} requestExecutor - A function that performs the actual request, receiving an AbortSignal.
+   * @param {number} timeout - The timeout duration in milliseconds.
+   * @returns {Promise<T>} A promise that resolves with the result of the request.
+   * @template T The expected type of the request result.
+   * @throws {Error} Throws an error if the request times out before receiving a response.
+   */
+  private async requestWithTimeout<T>(requestExecutor: (signal: AbortSignal) => Promise<T>, timeout: number): Promise<T> {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => {
       controller.abort();
     }, timeout);
 
     try {
-      const result = await client.rawRequest<T>({
-        query,
-        variables,
-        signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
+      const result = await requestExecutor(controller.signal);
       return result;
-    } catch (error) {
+    } finally {
       clearTimeout(timeoutId);
-      if (controller.signal.aborted) {
-        throw new Error(`Request timed out after ${timeout}ms`);
-      }
-      throw error;
     }
-  };
+  }
 
   /**
    * Validates the API version format (yyyy-mm), restricting mm to 01, 04, 07, or 10.
