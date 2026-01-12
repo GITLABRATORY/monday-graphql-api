@@ -7,6 +7,7 @@ describe('ApiClient timeout integration', () => {
   });
 
   afterEach(() => {
+    nock.abortPendingRequests();
     nock.cleanAll();
   });
 
