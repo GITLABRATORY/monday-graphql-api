@@ -4,6 +4,11 @@ const config: Config.InitialOptions = {
   verbose: true,
   testEnvironment: 'node',
   preset: 'ts-jest',
+  // Mock ESM modules from package-manager-detector since Jest can't parse them
+  moduleNameMapper: {
+    '^package-manager-detector/detect$': '<rootDir>/tests/__mocks__/package-manager-detector/detect.ts',
+    '^package-manager-detector/commands$': '<rootDir>/tests/__mocks__/package-manager-detector/commands.ts',
+  },
 };
 
 export default config;
