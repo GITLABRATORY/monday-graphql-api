@@ -8,12 +8,16 @@ describe('ApiClient timeout integration', () => {
   });
 
   afterEach(() => {
+    // Cancel any pending requests
     nock.abortPendingRequests();
+    // Clean mock interceptors
     nock.cleanAll();
   });
 
   afterAll(() => {
+    // Restore http module to original implementation (affected by importing nock)
     nock.restore();
+    // Re-enable real network connections
     nock.enableNetConnect();
   });
 
