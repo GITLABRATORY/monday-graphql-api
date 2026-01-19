@@ -4,6 +4,8 @@ import { Sdk, getSdk } from './generated/sdk';
 import pkg from '../package.json';
 import { getApiEndpoint } from './shared/get-api-endpoint';
 import { GraphQLClientResponse, RequestConfig } from 'graphql-request/build/esm/types';
+import z from 'zod';
+import { isValidApiVersion } from './shared/helpers';
 
 export { ClientError };
 
@@ -14,10 +16,14 @@ export interface ApiClientConfig {
   requestConfig?: RequestConfig;
 }
 
-export interface RequestOptions {
-  versionOverride?: string;
-  timeout?: number;
-}
+const requestOptionsSchema = z.object({
+  versionOverride: z.string().nonempty().optional().refine((version) => !version || isValidApiVersion(version), {
+    message: "Invalid API version format. Expected format is 'yyyy-mm' with month as one of '01', '04', '07', or '10'.",
+  }),
+  timeout: z.number().positive().max(60_000).optional(),
+})
+
+export type RequestOptions = z.infer<typeof requestOptionsSchema>;
 
 /**
  * The `ApiClient` class provides a structured way to interact with the Monday.com API,
@@ -41,7 +47,7 @@ export class ApiClient {
    */
   constructor(config: ApiClientConfig) {
     const { token, apiVersion = DEFAULT_VERSION, endpoint, requestConfig = {} } = config;
-    if (!this.isValidApiVersion(apiVersion)) {
+    if (!isValidApiVersion(apiVersion)) {
       throw new Error(
         "Invalid API version format. Expected format is 'yyyy-mm' with month as one of '01', '04', '07', or '10'.",
       );
@@ -66,12 +72,6 @@ export class ApiClient {
   private createClient(options?: RequestOptions): GraphQLClient {
     const { versionOverride } = options || {};
     const apiVersionToUse = versionOverride ?? this.defaultApiVersion;
-
-    if (versionOverride && !this.isValidApiVersion(versionOverride)) {
-      throw new Error(
-        "Invalid API version format. Expected format is 'yyyy-mm' with month as one of '01', '04', '07', or '10'.",
-      );
-    }
 
     const endpoint = getApiEndpoint(this.defaultEndpoint);
     const defaultHeaders = {
@@ -108,22 +108,21 @@ export class ApiClient {
    * @throws {Error} Throws an error if the request times out before receiving a response.
    */
   public request = async <T>(query: string, variables?: QueryVariables, options?: RequestOptions): Promise<T> => {
-    const client = this.createClient(options);
-    const { timeout } = options || {};
+    const validatedOptions = requestOptionsSchema.parse(options);
+    const client = this.createClient(validatedOptions);
+    const { abortController, timeoutId } = this.createAbortController(validatedOptions.timeout);
 
-    if (!timeout) {
-      return client.request<T>(query, variables);
+    try {
+      return await client.request<T>({
+        document: query,
+        variables,
+        signal: abortController?.signal,
+      });
+    } finally {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
     }
-
-    return this.requestWithTimeout<T>(
-      (signal) =>
-        client.request<T>({
-          document: query,
-          variables,
-          signal,
-        }),
-      timeout,
-    );
   };
 
   /**
@@ -148,54 +147,45 @@ export class ApiClient {
     variables?: QueryVariables,
     options?: RequestOptions,
   ): Promise<GraphQLClientResponse<T>> => {
+    const validatedOptions = requestOptionsSchema.parse(options);
     const client = this.createClient(options);
-    const { timeout } = options || {};
+    const { abortController, timeoutId } = this.createAbortController(validatedOptions.timeout);
 
-    if (!timeout) {
-      return client.rawRequest<T>(query, variables);
+    try {
+      return await client.rawRequest<T>({
+        query,
+        variables,
+        signal: abortController?.signal,
+      });
+    } finally {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
     }
-
-    return this.requestWithTimeout<GraphQLClientResponse<T>>(
-      (signal) =>
-        client.rawRequest<T>({
-          query,
-          variables,
-          signal,
-        }),
-      timeout,
-    );
   };
 
   /**
-   * Executes a request with timeout handling.
+   * Creates an AbortController with a timeout and a cleanup function.
    *
-   * @param {Function} requestExecutor - A function that performs the actual request, receiving an AbortSignal.
    * @param {number} timeout - The timeout duration in milliseconds.
-   * @returns {Promise<T>} A promise that resolves with the result of the request.
-   * @template T The expected type of the request result.
-   * @throws {Error} Throws an error if the request times out before receiving a response.
+   * @returns {{ abortController: AbortController | null, clear: () => void }} - The AbortController and cleanup function.
    */
-  private async requestWithTimeout<T>(requestExecutor: (signal: AbortSignal) => Promise<T>, timeout: number): Promise<T> {
+  private createAbortController(timeout: number | undefined): {
+    abortController: AbortController | null;
+    timeoutId: NodeJS.Timeout | null;
+  } {
+    if (!timeout) {
+      return { abortController: null, timeoutId: null };
+    }
+
     const controller = new AbortController();
     const timeoutId = setTimeout(() => {
       controller.abort();
     }, timeout);
 
-    try {
-      const result = await requestExecutor(controller.signal);
-      return result;
-    } finally {
-      clearTimeout(timeoutId);
-    }
-  }
-
-  /**
-   * Validates the API version format (yyyy-mm), restricting mm to 01, 04, 07, or 10.
-   *
-   * @param {string} version - The API version string to validate.
-   * @returns {boolean} - Returns true if the version matches yyyy-mm format with allowed months.
-   */
-  private isValidApiVersion(version: string): boolean {
-    return version === 'dev' || /^\d{4}-(01|04|07|10)$/.test(version);
+    return {
+      abortController,
+      timeoutId,
+    };
   }
 }
