@@ -5,7 +5,6 @@ import pkg from '../package.json';
 import { getApiEndpoint } from './shared/get-api-endpoint';
 import { GraphQLClientResponse, RequestConfig } from 'graphql-request/build/esm/types';
 import z from 'zod';
-import { isValidApiVersion } from './shared/helpers';
 
 export { ClientError };
 
@@ -24,6 +23,16 @@ const requestOptionsSchema = z.object({
 })
 
 export type RequestOptions = z.infer<typeof requestOptionsSchema>;
+
+/**
+* Validates the API version format (yyyy-mm), restricting mm to 01, 04, 07, or 10.
+*
+* @param {string} version - The API version string to validate.
+* @returns {boolean} - Returns true if the version matches yyyy-mm format with allowed months.
+*/
+const isValidApiVersion = (version: string): boolean => {
+  return version === 'dev' || /^\d{4}-(01|04|07|10)$/.test(version);
+ }
 
 /**
  * The `ApiClient` class provides a structured way to interact with the Monday.com API,
