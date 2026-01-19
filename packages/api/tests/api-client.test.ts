@@ -50,25 +50,12 @@ describe('ApiClient', () => {
       );
     });
 
-    it('should accept valid quarterly apiVersion (01)', () => {
-      expect(() => new ApiClient({ token: 'test-token', apiVersion: '2024-01' })).not.toThrow();
-    });
-
-    it('should accept valid quarterly apiVersion (04)', () => {
-      expect(() => new ApiClient({ token: 'test-token', apiVersion: '2024-04' })).not.toThrow();
-    });
-
-    it('should accept valid quarterly apiVersion (07)', () => {
-      expect(() => new ApiClient({ token: 'test-token', apiVersion: '2024-07' })).not.toThrow();
-    });
-
-    it('should accept valid quarterly apiVersion (10)', () => {
-      expect(() => new ApiClient({ token: 'test-token', apiVersion: '2024-10' })).not.toThrow();
-    });
-
-    it('should accept "dev" as a valid apiVersion', () => {
-      expect(() => new ApiClient({ token: 'test-token', apiVersion: 'dev' })).not.toThrow();
-    });
+    it.each(['2024-01', '2024-04', '2024-07', '2024-10', 'dev'])(
+      'should accept valid apiVersion: %s',
+      (apiVersion) => {
+        expect(() => new ApiClient({ token: 'test-token', apiVersion })).not.toThrow();
+      },
+    );
   });
 
   // rawRequest() is using same validation so it's covered by the same tests
