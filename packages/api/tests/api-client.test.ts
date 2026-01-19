@@ -15,10 +15,6 @@ jest.mock('graphql-request', () => {
 });
 
 describe('ApiClient', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
   it('should correctly initialize with default parameters', () => {
     const token = 'test-token';
     const apiClient = new ApiClient({ token });
