@@ -1,5 +1,6 @@
 import nock from 'nock';
 import { ApiClient } from '../lib/api-client';
+import { MONDAY_API_ENDPOINT } from '../lib/constants';
 
 describe('ApiClient timeout integration', () => {
   beforeAll(() => {
@@ -18,8 +19,8 @@ describe('ApiClient timeout integration', () => {
 
   describe('request method', () => {
     it('should abort request when timeout is exceeded', async () => {
-      nock('https://api.monday.com')
-        .post('/v2')
+      nock(MONDAY_API_ENDPOINT)
+        .post('')
         .delay(2000)
         .reply(200, { data: { users: [] } });
 
@@ -30,8 +31,8 @@ describe('ApiClient timeout integration', () => {
     });
 
     it('should complete successfully when response arrives before timeout', async () => {
-      nock('https://api.monday.com')
-        .post('/v2')
+      nock(MONDAY_API_ENDPOINT)
+        .post('')
         .delay(50)
         .reply(200, { data: { users: [{ id: '1' }] } });
 
@@ -43,8 +44,8 @@ describe('ApiClient timeout integration', () => {
     });
 
     it('should work without timeout option', async () => {
-      nock('https://api.monday.com')
-        .post('/v2')
+      nock(MONDAY_API_ENDPOINT)
+        .post('')
         .reply(200, { data: { users: [{ id: '1', name: 'John' }] } });
 
       const apiClient = new ApiClient({ token: 'test-token' });
@@ -57,8 +58,8 @@ describe('ApiClient timeout integration', () => {
 
   describe('rawRequest method', () => {
     it('should abort rawRequest when timeout is exceeded', async () => {
-      nock('https://api.monday.com')
-        .post('/v2')
+      nock(MONDAY_API_ENDPOINT)
+        .post('')
         .delay(2000)
         .reply(200, { data: { users: [] } });
 
@@ -69,8 +70,8 @@ describe('ApiClient timeout integration', () => {
     });
 
     it('should complete rawRequest successfully when response arrives before timeout', async () => {
-      nock('https://api.monday.com')
-        .post('/v2')
+      nock(MONDAY_API_ENDPOINT)
+        .post('')
         .delay(50)
         .reply(200, { data: { users: [{ id: '1' }] } });
 
