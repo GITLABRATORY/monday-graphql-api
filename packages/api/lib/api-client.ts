@@ -108,9 +108,9 @@ export class ApiClient {
    * @throws {Error} Throws an error if the request times out before receiving a response.
    */
   public request = async <T>(query: string, variables?: QueryVariables, options?: RequestOptions): Promise<T> => {
-    const validatedOptions = requestOptionsSchema.parse(options);
+    const validatedOptions = options ? requestOptionsSchema.parse(options) : options;
     const client = this.createClient(validatedOptions);
-    const { abortController, timeoutId } = this.createAbortController(validatedOptions.timeout);
+    const { abortController, timeoutId } = this.createAbortController(validatedOptions?.timeout);
 
     try {
       return await client.request<T>({
@@ -147,9 +147,9 @@ export class ApiClient {
     variables?: QueryVariables,
     options?: RequestOptions,
   ): Promise<GraphQLClientResponse<T>> => {
-    const validatedOptions = requestOptionsSchema.parse(options);
+    const validatedOptions = options ? requestOptionsSchema.parse(options) : options;
     const client = this.createClient(options);
-    const { abortController, timeoutId } = this.createAbortController(validatedOptions.timeout);
+    const { abortController, timeoutId } = this.createAbortController(validatedOptions?.timeout);
 
     try {
       return await client.rawRequest<T>({
@@ -184,7 +184,7 @@ export class ApiClient {
     }, timeout);
 
     return {
-      abortController,
+      abortController: controller,
       timeoutId,
     };
   }
