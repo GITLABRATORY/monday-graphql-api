@@ -102,6 +102,31 @@ export class ApiClient {
   }
 
   /**
+   * Executes a GraphQL request with common setup and cleanup logic.
+   *
+   * @param {RequestOptions} [options] - Optional request configuration.
+   * @param {Function} executor - Function that performs the actual request.
+   * @returns {Promise<T>} A promise that resolves with the result.
+   * @template T The expected type of the result.
+   */
+  private executeRequest = async <T>(
+    options: RequestOptions | undefined,
+    executor: (client: GraphQLClient, signal: AbortSignal | undefined) => Promise<T>,
+  ): Promise<T> => {
+    const validatedOptions = options ? requestOptionsSchema.parse(options) : options;
+    const client = this.createClient(validatedOptions);
+    const { abortController, timeoutId } = this.createAbortController(validatedOptions?.timeout);
+
+    try {
+      return await executor(client, abortController?.signal);
+    } finally {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    }
+  };
+
+  /**
    * Performs a GraphQL query or mutation to the Monday.com API using a dynamically created
    * GraphQL client. This method is asynchronous and returns a promise that resolves
    * with the query result.
@@ -117,21 +142,9 @@ export class ApiClient {
    * @throws {Error} Throws an error if the request times out before receiving a response.
    */
   public request = async <T>(query: string, variables?: QueryVariables, options?: RequestOptions): Promise<T> => {
-    const validatedOptions = options ? requestOptionsSchema.parse(options) : options;
-    const client = this.createClient(validatedOptions);
-    const { abortController, timeoutId } = this.createAbortController(validatedOptions?.timeout);
-
-    try {
-      return await client.request<T>({
-        document: query,
-        variables,
-        signal: abortController?.signal,
-      });
-    } finally {
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-    }
+    return this.executeRequest(options, (client, signal) =>
+      client.request<T>({ document: query, variables, signal }),
+    );
   };
 
   /**
@@ -156,21 +169,9 @@ export class ApiClient {
     variables?: QueryVariables,
     options?: RequestOptions,
   ): Promise<GraphQLClientResponse<T>> => {
-    const validatedOptions = options ? requestOptionsSchema.parse(options) : options;
-    const client = this.createClient(options);
-    const { abortController, timeoutId } = this.createAbortController(validatedOptions?.timeout);
-
-    try {
-      return await client.rawRequest<T>({
-        query,
-        variables,
-        signal: abortController?.signal,
-      });
-    } finally {
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-    }
+    return this.executeRequest(options, (client, signal) =>
+      client.rawRequest<T>({ query, variables, signal }),
+    );
   };
 
   /**
