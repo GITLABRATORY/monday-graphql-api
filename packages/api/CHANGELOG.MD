@@ -6,6 +6,9 @@
 
 - **Default API version updated**: The default API version is now `2026-01`
 
+### Added
+- Added the ability to define timeout for `.request()` and `.rawRequest()` methods of `ApiClient`
+
 ## [12.0.0]
 
 ### ⚠️ Breaking Changes
