@@ -62,6 +62,11 @@ const boards = await client.request<{boards: [{ name: string }]}>(`query { board
 const { boards } = await client.request<{
   boards: [Board];
 }>(`query { boards(ids: some_id) { name } }`);
+
+// You can also define timeout for requests
+const { boards } = await client.request<{
+  boards: [Board];
+}>(`query { boards(ids: some_id) { name } }`, undefined, { timeout: 20_000 });
 ```
 
 ### Using the types
