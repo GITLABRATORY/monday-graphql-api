@@ -1,5 +1,21 @@
 # Changelog
 
+## [13.0.0]
+
+### ⚠️ Breaking Changes
+
+- **Default API version updated**: The default API version is now `2026-01`
+
+### Added
+- **Request cancellation**: Added the ability to define timeout for `.request()` and `.rawRequest()` methods of `ApiClient`
+```
+import { ApiClient } from '@mondaydotcomorg/api';
+
+const client = new ApiClient({token: '<API-TOKEN>'});
+
+client.request('<QUERY>', undefined, { timeout: 20_000 })
+```
+
 ## [12.0.0]
 
 ### ⚠️ Breaking Changes

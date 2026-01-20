@@ -4,6 +4,7 @@ import { Sdk, getSdk } from './generated/sdk';
 import pkg from '../package.json';
 import { getApiEndpoint } from './shared/get-api-endpoint';
 import { GraphQLClientResponse, RequestConfig } from 'graphql-request/build/esm/types';
+import z from 'zod';
 
 export { ClientError };
 
@@ -14,9 +15,24 @@ export interface ApiClientConfig {
   requestConfig?: RequestConfig;
 }
 
-export interface RequestOptions {
-  versionOverride?: string;
-}
+const requestOptionsSchema = z.object({
+  versionOverride: z.string().nonempty().optional().refine((version) => !version || isValidApiVersion(version), {
+    message: "Invalid API version format. Expected format is 'yyyy-mm' with month as one of '01', '04', '07', or '10'.",
+  }),
+  timeout: z.number().positive().max(60_000).optional(),
+})
+
+export type RequestOptions = z.infer<typeof requestOptionsSchema>;
+
+/**
+* Validates the API version format (yyyy-mm), restricting mm to 01, 04, 07, or 10.
+*
+* @param {string} version - The API version string to validate.
+* @returns {boolean} - Returns true if the version matches yyyy-mm format with allowed months.
+*/
+const isValidApiVersion = (version: string): boolean => {
+  return version === 'dev' || /^\d{4}-(01|04|07|10)$/.test(version);
+ }
 
 /**
  * The `ApiClient` class provides a structured way to interact with the Monday.com API,
@@ -40,7 +56,7 @@ export class ApiClient {
    */
   constructor(config: ApiClientConfig) {
     const { token, apiVersion = DEFAULT_VERSION, endpoint, requestConfig = {} } = config;
-    if (!this.isValidApiVersion(apiVersion)) {
+    if (!isValidApiVersion(apiVersion)) {
       throw new Error(
         "Invalid API version format. Expected format is 'yyyy-mm' with month as one of '01', '04', '07', or '10'.",
       );
@@ -66,12 +82,6 @@ export class ApiClient {
     const { versionOverride } = options || {};
     const apiVersionToUse = versionOverride ?? this.defaultApiVersion;
 
-    if (versionOverride && !this.isValidApiVersion(versionOverride)) {
-      throw new Error(
-        "Invalid API version format. Expected format is 'yyyy-mm' with month as one of '01', '04', '07', or '10'.",
-      );
-    }
-
     const endpoint = getApiEndpoint(this.defaultEndpoint);
     const defaultHeaders = {
       'Content-Type': 'application/json',
@@ -92,6 +102,31 @@ export class ApiClient {
   }
 
   /**
+   * Executes a GraphQL request with common setup and cleanup logic.
+   *
+   * @param {RequestOptions} [options] - Optional request configuration.
+   * @param {Function} executor - Function that performs the actual request.
+   * @returns {Promise<T>} A promise that resolves with the result.
+   * @template T The expected type of the result.
+   */
+  private executeRequest = async <T>(
+    options: RequestOptions | undefined,
+    executor: (client: GraphQLClient, signal: AbortSignal | undefined) => Promise<T>,
+  ): Promise<T> => {
+    const validatedOptions = options ? requestOptionsSchema.parse(options) : options;
+    const client = this.createClient(validatedOptions);
+    const { abortController, timeoutId } = this.createAbortController(validatedOptions?.timeout);
+
+    try {
+      return await executor(client, abortController?.signal);
+    } finally {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    }
+  };
+
+  /**
    * Performs a GraphQL query or mutation to the Monday.com API using a dynamically created
    * GraphQL client. This method is asynchronous and returns a promise that resolves
    * with the query result.
@@ -101,13 +136,15 @@ export class ApiClient {
    *        `QueryVariables` is a type alias for `Record<string, any>`, allowing specification
    *        of key-value pairs where the value can be any type. This parameter is used to provide
    *        dynamic values in the query or mutation.
-   * @param {RequestOptions} [options] - Optional request configuration including version override.
+   * @param {RequestOptions} [options] - Optional request configuration including version override and timeout.
    * @returns {Promise<T>} A promise that resolves with the result of the query or mutation.
    * @template T The expected type of the query or mutation result.
+   * @throws {Error} Throws an error if the request times out before receiving a response.
    */
   public request = async <T>(query: string, variables?: QueryVariables, options?: RequestOptions): Promise<T> => {
-    const client = this.createClient(options);
-    return client.request<T>(query, variables);
+    return this.executeRequest(options, (client, signal) =>
+      client.request<T>({ document: query, variables, signal }),
+    );
   };
 
   /**
@@ -122,26 +159,43 @@ export class ApiClient {
    *        `QueryVariables` is a type alias for `Record<string, any>`, allowing specification
    *        of key-value pairs where the value can be any type. This parameter is used to provide
    *        dynamic values in the query or mutation.
-   * @param {RequestOptions} [options] - Optional request configuration including version override.
+   * @param {RequestOptions} [options] - Optional request configuration including version override and timeout.
    * @returns {Promise<T>} A promise that resolves with the result of the query or mutation.
    * @template T The expected type of the query or mutation result.
+   * @throws {Error} Throws an error if the request times out before receiving a response.
    */
   public rawRequest = async <T>(
     query: string,
     variables?: QueryVariables,
     options?: RequestOptions,
   ): Promise<GraphQLClientResponse<T>> => {
-    const client = this.createClient(options);
-    return client.rawRequest<T>(query, variables);
+    return this.executeRequest(options, (client, signal) =>
+      client.rawRequest<T>({ query, variables, signal }),
+    );
   };
 
   /**
-   * Validates the API version format (yyyy-mm), restricting mm to 01, 04, 07, or 10.
+   * Creates an AbortController with a timeout and a cleanup function.
    *
-   * @param {string} version - The API version string to validate.
-   * @returns {boolean} - Returns true if the version matches yyyy-mm format with allowed months.
+   * @param {number} timeout - The timeout duration in milliseconds.
+   * @returns {{ abortController: AbortController | null, clear: () => void }} - The AbortController and cleanup function.
    */
-  private isValidApiVersion(version: string): boolean {
-    return version === 'dev' || /^\d{4}-(01|04|07|10)$/.test(version);
+  private createAbortController(timeout: number | undefined): {
+    abortController: AbortController | null;
+    timeoutId: NodeJS.Timeout | null;
+  } {
+    if (!timeout) {
+      return { abortController: null, timeoutId: null };
+    }
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+    }, timeout);
+
+    return {
+      abortController: controller,
+      timeoutId,
+    };
   }
 }

@@ -24,7 +24,6 @@ const mockedResolveCommand = resolveCommand as jest.MockedFunction<typeof resolv
 
 describe('setupGraphQL with npm fallback', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
     _resetCache(); // Reset the cached package manager detection
     // Mock no package manager detected (fallback to npm)
     mockedDetect.mockResolvedValue(null);
@@ -68,7 +67,6 @@ describe('setupGraphQL with npm fallback', () => {
 
 describe('setupGraphQL with pnpm', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
     _resetCache(); // Reset the cached package manager detection
     // Mock pnpm detection
     mockedDetect.mockResolvedValue({ agent: 'pnpm', name: 'pnpm', version: '8.0.0' });
