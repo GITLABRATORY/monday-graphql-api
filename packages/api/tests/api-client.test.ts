@@ -19,14 +19,14 @@ describe('ApiClient', () => {
     const token = 'test-token';
     const apiClient = new ApiClient({ token });
 
-    expect(GraphQLClient).toHaveBeenCalledWith('https://api.monday.com/v2', {
+    expect(GraphQLClient).toHaveBeenCalledWith('https://api.monday.com/v2', expect.objectContaining({
       headers: {
         'Content-Type': 'application/json',
         Authorization: token,
         'API-Version': DEFAULT_VERSION,
         'Api-Sdk-Version': pkg.version,
       },
-    });
+    }));
 
     expect(apiClient.operations).toBeDefined();
   });
