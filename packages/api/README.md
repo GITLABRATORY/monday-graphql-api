@@ -75,12 +75,10 @@ The SDK supports file uploads. Simply pass a `File` or `Blob` object in your var
 
 > **Important:** The SDK uses Node's `fetch` method that recognizes built-in `File` and `Blob` to create multi-part request.
 
-> **Note:** You **must** use the endpoint `https://api.monday.com/v2/file` when uploading files. Set this endpoint via the `endpoint` option in the `ApiClient` constructor as shown below.
-
 ```typescript
 import { ApiClient } from '@mondaydotcomorg/api';
 
-const client = new ApiClient({ endpoint: 'https://api.monday.com/v2/file', token: '<API-TOKEN>' });
+const client = new ApiClient({ token: '<API-TOKEN>' });
 
 // Create a file to upload
 const file = new File([Buffer.from('Hello World!')], 'test.txt', { type: 'text/plain' });
