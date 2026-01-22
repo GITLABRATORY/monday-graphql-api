@@ -228,7 +228,7 @@ export class ApiClient {
     const processValue = (value: unknown, currentPath: string): unknown => {
       if (this.isFile(value)) {
         files.push({ path: currentPath, file: value });
-        return null; // Replace file with null per the spec
+        return null; // Replace file with null per the GraphQL multipart request specification
       }
 
       if (Array.isArray(value)) {
