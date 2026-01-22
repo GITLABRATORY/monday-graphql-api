@@ -73,7 +73,7 @@ const { boards } = await client.request<{
 
 The SDK supports file uploads. Simply pass a `File` or `Blob` object in your variables, and the client will automatically handle the multipart request.
 
-> **Important:** The SDK uses Node's `fetch` method that recognizes built-in `File` and `Blob` to create multi-part request. If you pass custom `fetch` implementation via `RequestConfig` you must use compatible types.
+> **Important:** The SDK uses Node's `fetch` method that recognizes built-in `File` and `Blob` to create multi-part request.
 
 > **Note:** You **must** use the endpoint `https://api.monday.com/v2/file` when uploading files. Set this endpoint via the `endpoint` option in the `ApiClient` constructor as shown below.
 
