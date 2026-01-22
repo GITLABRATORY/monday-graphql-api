@@ -2,6 +2,7 @@ import { GraphQLClient } from 'graphql-request';
 import { ApiClient } from '../lib/api-client';
 import pkg from '../package.json';
 import { DEFAULT_VERSION } from '../lib/constants';
+import { TEST_TOKEN } from './test-utils';
 
 jest.mock('graphql-request', () => {
   return {
@@ -16,13 +17,12 @@ jest.mock('graphql-request', () => {
 
 describe('ApiClient', () => {
   it('should correctly initialize with default parameters', () => {
-    const token = 'test-token';
-    const apiClient = new ApiClient({ token });
+    const apiClient = new ApiClient({ token: TEST_TOKEN });
 
     expect(GraphQLClient).toHaveBeenCalledWith('https://api.monday.com/v2', expect.objectContaining({
       headers: {
         'Content-Type': 'application/json',
-        Authorization: token,
+        Authorization: TEST_TOKEN,
         'API-Version': DEFAULT_VERSION,
         'Api-Sdk-Version': pkg.version,
       },
@@ -33,19 +33,19 @@ describe('ApiClient', () => {
 
   describe('constructor apiVersion validation', () => {
     it('should throw error for invalid month in apiVersion', () => {
-      expect(() => new ApiClient({ token: 'test-token', apiVersion: '2024-03' })).toThrow(
+      expect(() => new ApiClient({ token: TEST_TOKEN, apiVersion: '2024-03' })).toThrow(
         "Invalid API version format. Expected format is 'yyyy-mm' with month as one of '01', '04', '07', or '10'.",
       );
     });
 
     it('should throw error for malformed apiVersion format', () => {
-      expect(() => new ApiClient({ token: 'test-token', apiVersion: 'invalid' })).toThrow(
+      expect(() => new ApiClient({ token: TEST_TOKEN, apiVersion: 'invalid' })).toThrow(
         "Invalid API version format. Expected format is 'yyyy-mm' with month as one of '01', '04', '07', or '10'.",
       );
     });
 
     it('should throw error for apiVersion with extra characters', () => {
-      expect(() => new ApiClient({ token: 'test-token', apiVersion: '2024-01-01' })).toThrow(
+      expect(() => new ApiClient({ token: TEST_TOKEN, apiVersion: '2024-01-01' })).toThrow(
         "Invalid API version format. Expected format is 'yyyy-mm' with month as one of '01', '04', '07', or '10'.",
       );
     });
@@ -53,7 +53,7 @@ describe('ApiClient', () => {
     it.each(['2024-01', '2024-04', '2024-07', '2024-10', 'dev'])(
       'should accept valid apiVersion: %s',
       (apiVersion) => {
-        expect(() => new ApiClient({ token: 'test-token', apiVersion })).not.toThrow();
+        expect(() => new ApiClient({ token: TEST_TOKEN, apiVersion })).not.toThrow();
       },
     );
   });
@@ -63,7 +63,7 @@ describe('ApiClient', () => {
     let apiClient: ApiClient;
 
     beforeEach(() => {
-      apiClient = new ApiClient({ token: 'test-token' });
+      apiClient = new ApiClient({ token: TEST_TOKEN });
     });
 
     describe('versionOverride validation', () => {
