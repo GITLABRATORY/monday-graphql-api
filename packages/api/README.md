@@ -71,7 +71,7 @@ const { boards } = await client.request<{
 
 ### File uploads
 
-The SDK supports file uploads. Simply pass a `File` or `Blob` object in your variables, and the client will automatically handle the multipart request.
+The SDK supports file uploads. Yo must pass Node's `File` or `Blob` object in your variables, and the client will automatically handle the multipart request.
 
 > **Important:** The SDK uses Node's `fetch` method that recognizes built-in `File` and `Blob` to create multi-part request.
 
