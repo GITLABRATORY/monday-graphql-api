@@ -2,7 +2,8 @@ import { MockAgent } from 'undici';
 import { ApiClient } from '../lib/api-client';
 import { MONDAY_API_ENDPOINT } from '../lib/constants';
 
-const MONDAY_API_ORIGIN = MONDAY_API_ENDPOINT.replace('/v2', '');
+const MONDAY_API_SUFFIX = '/v2';
+const MONDAY_API_ORIGIN = MONDAY_API_ENDPOINT.replace(MONDAY_API_SUFFIX, '');
 
 describe('ApiClient timeout integration', () => {
   let mockAgent: MockAgent;
@@ -33,7 +34,7 @@ describe('ApiClient timeout integration', () => {
     it('should abort request when timeout is exceeded', async () => {
       const mockPool = mockAgent.get(MONDAY_API_ORIGIN);
       mockPool
-        .intercept({ path: '/v2', method: 'POST' })
+        .intercept({ path: MONDAY_API_SUFFIX, method: 'POST' })
         .reply(200, { data: { users: [] } }, { headers: jsonHeaders })
         .delay(2000);
 
@@ -46,7 +47,7 @@ describe('ApiClient timeout integration', () => {
     it('should complete successfully when response arrives before timeout', async () => {
       const mockPool = mockAgent.get(MONDAY_API_ORIGIN);
       mockPool
-        .intercept({ path: '/v2', method: 'POST' })
+        .intercept({ path: MONDAY_API_SUFFIX, method: 'POST' })
         .reply(200, { data: { users: [{ id: '1' }] } }, { headers: jsonHeaders });
 
       const apiClient = createMockedApiClient();
@@ -59,7 +60,7 @@ describe('ApiClient timeout integration', () => {
     it('should work without timeout option', async () => {
       const mockPool = mockAgent.get(MONDAY_API_ORIGIN);
       mockPool
-        .intercept({ path: '/v2', method: 'POST' })
+        .intercept({ path: MONDAY_API_SUFFIX, method: 'POST' })
         .reply(200, { data: { users: [{ id: '1', name: 'John' }] } }, { headers: jsonHeaders });
 
       const apiClient = createMockedApiClient();
@@ -74,7 +75,7 @@ describe('ApiClient timeout integration', () => {
     it('should abort rawRequest when timeout is exceeded', async () => {
       const mockPool = mockAgent.get(MONDAY_API_ORIGIN);
       mockPool
-        .intercept({ path: '/v2', method: 'POST' })
+        .intercept({ path: MONDAY_API_SUFFIX, method: 'POST' })
         .reply(200, { data: { users: [] } }, { headers: jsonHeaders })
         .delay(2000);
 
@@ -87,7 +88,7 @@ describe('ApiClient timeout integration', () => {
     it('should complete rawRequest successfully when response arrives before timeout', async () => {
       const mockPool = mockAgent.get(MONDAY_API_ORIGIN);
       mockPool
-        .intercept({ path: '/v2', method: 'POST' })
+        .intercept({ path: MONDAY_API_SUFFIX, method: 'POST' })
         .reply(200, { data: { users: [{ id: '1' }] } }, { headers: jsonHeaders });
 
       const apiClient = createMockedApiClient();
@@ -136,7 +137,7 @@ describe('ApiClient file upload integration', () => {
     it('should convert request with single file to multipart/form-data', async () => {
       const mockPool = mockAgent.get(MONDAY_API_ORIGIN);
       mockPool
-        .intercept({ path: '/v2', method: 'POST' })
+        .intercept({ path: MONDAY_API_SUFFIX, method: 'POST' })
         .reply(200, { data: { add_file_to_column: { id: '123' } } }, { headers: jsonHeaders });
 
       const apiClient = createMockedApiClient();
@@ -166,7 +167,7 @@ describe('ApiClient file upload integration', () => {
     it('should convert request with multiple files in array to multipart/form-data', async () => {
       const mockPool = mockAgent.get(MONDAY_API_ORIGIN);
       mockPool
-        .intercept({ path: '/v2', method: 'POST' })
+        .intercept({ path: MONDAY_API_SUFFIX, method: 'POST' })
         .reply(200, { data: { upload_files: { success: true } } }, { headers: jsonHeaders });
 
       const apiClient = createMockedApiClient();
@@ -197,7 +198,7 @@ describe('ApiClient file upload integration', () => {
     it('should handle nested files in objects', async () => {
       const mockPool = mockAgent.get(MONDAY_API_ORIGIN);
       mockPool
-        .intercept({ path: '/v2', method: 'POST' })
+        .intercept({ path: MONDAY_API_SUFFIX, method: 'POST' })
         .reply(200, { data: { upload: { id: '456' } } }, { headers: jsonHeaders });
 
       const apiClient = createMockedApiClient();
@@ -237,7 +238,7 @@ describe('ApiClient file upload integration', () => {
     it('should remove Content-Type header for multipart requests', async () => {
       const mockPool = mockAgent.get(MONDAY_API_ORIGIN);
       mockPool
-        .intercept({ path: '/v2', method: 'POST' })
+        .intercept({ path: MONDAY_API_SUFFIX, method: 'POST' })
         .reply(200, { data: { upload: { id: '789' } } }, { headers: jsonHeaders });
 
       const apiClient = createMockedApiClient();
@@ -255,7 +256,7 @@ describe('ApiClient file upload integration', () => {
     it('should keep request as JSON when no files are present', async () => {
       const mockPool = mockAgent.get(MONDAY_API_ORIGIN);
       mockPool
-        .intercept({ path: '/v2', method: 'POST' })
+        .intercept({ path: MONDAY_API_SUFFIX, method: 'POST' })
         .reply(200, { data: { users: [{ id: '1' }] } }, { headers: jsonHeaders });
 
       const apiClient = createMockedApiClient();
@@ -272,7 +273,7 @@ describe('ApiClient file upload integration', () => {
     it('should work with rawRequest method for file uploads', async () => {
       const mockPool = mockAgent.get(MONDAY_API_ORIGIN);
       mockPool
-        .intercept({ path: '/v2', method: 'POST' })
+        .intercept({ path: MONDAY_API_SUFFIX, method: 'POST' })
         .reply(200, { data: { add_file_to_column: { id: '999' } } }, { headers: jsonHeaders });
 
       const apiClient = createMockedApiClient();
@@ -288,7 +289,7 @@ describe('ApiClient file upload integration', () => {
     it('should handle mixed files and regular variables', async () => {
       const mockPool = mockAgent.get(MONDAY_API_ORIGIN);
       mockPool
-        .intercept({ path: '/v2', method: 'POST' })
+        .intercept({ path: MONDAY_API_SUFFIX, method: 'POST' })
         .reply(200, { data: { create_item: { id: '111' } } }, { headers: jsonHeaders });
 
       const apiClient = createMockedApiClient();
