@@ -104,27 +104,27 @@ describe('ApiClient', () => {
 
     describe('timeout validation', () => {
       it('should reject negative timeout', async () => {
-        await expect(apiClient.request('query { me { id } }', {}, { timeout: -1000 })).rejects.toThrow();
+        await expect(apiClient.request('query { me { id } }', {}, { timeoutMs: -1000 })).rejects.toThrow();
       });
 
       it('should reject zero timeout', async () => {
-        await expect(apiClient.request('query { me { id } }', {}, { timeout: 0 })).rejects.toThrow();
+        await expect(apiClient.request('query { me { id } }', {}, { timeoutMs: 0 })).rejects.toThrow();
       });
 
       it('should reject timeout exceeding 60 seconds', async () => {
-        await expect(apiClient.request('query { me { id } }', {}, { timeout: 60001 })).rejects.toThrow();
+        await expect(apiClient.request('query { me { id } }', {}, { timeoutMs: 60001 })).rejects.toThrow();
       });
 
       it('should accept valid timeout within range', async () => {
-        await expect(apiClient.request('query { me { id } }', {}, { timeout: 5000 })).resolves.not.toThrow();
+        await expect(apiClient.request('query { me { id } }', {}, { timeoutMs: 5000 })).resolves.not.toThrow();
       });
 
       it('should accept timeout at maximum value (60000)', async () => {
-        await expect(apiClient.request('query { me { id } }', {}, { timeout: 60000 })).resolves.not.toThrow();
+        await expect(apiClient.request('query { me { id } }', {}, { timeoutMs: 60000 })).resolves.not.toThrow();
       });
 
       it('should accept no timeout', async () => {
-        await expect(apiClient.request('query { me { id } }', {}, { timeout: undefined })).resolves.not.toThrow();
+        await expect(apiClient.request('query { me { id } }', {}, { timeoutMs: undefined })).resolves.not.toThrow();
       });
     });
 

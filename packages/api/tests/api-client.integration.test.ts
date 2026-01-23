@@ -28,7 +28,7 @@ describe('ApiClient timeout integration', () => {
       const apiClient = createMockedApiClient(ctx.mockAgent);
       const query = '{ users { id } }';
 
-      await expect(apiClient.request(query, undefined, { timeout: 100 })).rejects.toThrow('This operation was aborted');
+      await expect(apiClient.request(query, undefined, { timeoutMs: 100 })).rejects.toThrow('This operation was aborted');
     });
 
     it('should complete successfully when response arrives before timeout', async () => {
@@ -37,7 +37,7 @@ describe('ApiClient timeout integration', () => {
       const apiClient = createMockedApiClient(ctx.mockAgent);
       const query = '{ users { id } }';
 
-      const result = await apiClient.request(query, undefined, { timeout: 500 });
+      const result = await apiClient.request(query, undefined, { timeoutMs: 500 });
       expect(result).toEqual({ users: [{ id: '1' }] });
     });
 
@@ -59,7 +59,7 @@ describe('ApiClient timeout integration', () => {
       const apiClient = createMockedApiClient(ctx.mockAgent);
       const query = '{ users { id } }';
 
-      await expect(apiClient.rawRequest(query, undefined, { timeout: 100 })).rejects.toThrow('This operation was aborted');
+      await expect(apiClient.rawRequest(query, undefined, { timeoutMs: 100 })).rejects.toThrow('This operation was aborted');
     });
 
     it('should complete rawRequest successfully when response arrives before timeout', async () => {
@@ -68,7 +68,7 @@ describe('ApiClient timeout integration', () => {
       const apiClient = createMockedApiClient(ctx.mockAgent);
       const query = '{ users { id } }';
 
-      const result = await apiClient.rawRequest(query, undefined, { timeout: 500 });
+      const result = await apiClient.rawRequest(query, undefined, { timeoutMs: 500 });
       expect(result.data).toEqual({ users: [{ id: '1' }] });
     });
   });
