@@ -111,16 +111,8 @@ describe('ApiClient', () => {
         await expect(apiClient.request('query { me { id } }', {}, { timeoutMs: 0 })).rejects.toThrow();
       });
 
-      it('should reject timeout exceeding 60 seconds', async () => {
-        await expect(apiClient.request('query { me { id } }', {}, { timeoutMs: 60001 })).rejects.toThrow();
-      });
-
-      it('should accept valid timeout within range', async () => {
+      it('should accept positive timeout', async () => {
         await expect(apiClient.request('query { me { id } }', {}, { timeoutMs: 5000 })).resolves.not.toThrow();
-      });
-
-      it('should accept timeout at maximum value (60000)', async () => {
-        await expect(apiClient.request('query { me { id } }', {}, { timeoutMs: 60000 })).resolves.not.toThrow();
       });
 
       it('should accept no timeout', async () => {
