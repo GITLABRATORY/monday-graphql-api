@@ -67,7 +67,7 @@ const isFile = (value: unknown): value is File | Blob => {
 /**
  * Checks if variables contain any File or Blob objects
  */
-function hasFiles(variables: Variables | undefined): boolean {
+const hasFiles = (variables: Variables | undefined): boolean => {
   if (!variables) {
     return false;
   }
@@ -96,10 +96,10 @@ function hasFiles(variables: Variables | undefined): boolean {
  * @param path - Current path in the object (for building variable paths)
  * @returns Object with cleaned variables (files replaced with null) and file mappings
  */
-function extractFiles(
+const extractFiles = (
   variables: Variables,
   path = 'variables'
-): { cleanedVariables: Variables; files: FileEntry[] } {
+): { cleanedVariables: Variables; files: FileEntry[] } => {
   const files: FileEntry[] = [];
 
   const processValue = (value: unknown, currentPath: string): unknown => {
@@ -131,7 +131,7 @@ function extractFiles(
  * Creates a FormData object for GraphQL multipart file upload requests
  * following the GraphQL multipart request specification.
  */
-function createMultipartFormData(query: string, variables: Variables, files: FileEntry[]): FormData {
+const createMultipartFormData = (query: string, variables: Variables, files: FileEntry[]): FormData => {
   const formData = new FormData();
 
   formData.append('query', query);

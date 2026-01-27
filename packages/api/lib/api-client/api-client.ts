@@ -20,7 +20,7 @@ const requestOptionsSchema = z.object({
   versionOverride: z.string().nonempty().optional().refine((version) => !version || isValidApiVersion(version), {
     message: "Invalid API version format. Expected format is 'yyyy-mm' with month as one of '01', '04', '07', or '10'.",
   }),
-  timeoutMs: z.number().positive().optional(),
+  timeoutMs: z.number().positive().max(60_000).optional(),
 })
 
 export type RequestOptions = z.infer<typeof requestOptionsSchema>;
